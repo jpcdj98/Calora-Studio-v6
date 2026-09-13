@@ -696,23 +696,26 @@ fun TodayScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable {
-                                        collapsedMeals = if (isCollapsed) {
-                                            collapsedMeals - meal
-                                        } else {
-                                            collapsedMeals + meal
-                                        }
-                                    }
-                                    .padding(vertical = 4.dp)
-                                    .testTag("meal_header_$meal"),
+                                    .padding(vertical = 2.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                // Collapsible tile header (expand/collapse trigger)
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.weight(1f)
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .clickable {
+                                            collapsedMeals = if (isCollapsed) {
+                                                collapsedMeals - meal
+                                            } else {
+                                                collapsedMeals + meal
+                                            }
+                                        }
+                                        .padding(vertical = 6.dp, horizontal = 4.dp)
+                                        .testTag("meal_header_$meal")
                                 ) {
                                     Icon(
                                         imageVector = if (isCollapsed) Icons.Default.ExpandMore else Icons.Default.ExpandLess,
@@ -720,7 +723,7 @@ fun TodayScreen(
                                         tint = PurpleAccent,
                                         modifier = Modifier.size(20.dp)
                                     )
-                                    Column {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -745,6 +748,7 @@ fun TodayScreen(
                                                 )
                                             }
                                         }
+                                        Spacer(modifier = Modifier.height(2.dp))
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(5.dp)
@@ -784,22 +788,27 @@ fun TodayScreen(
                                     }
                                 }
 
-                                IconButton(
-                                    onClick = {
-                                        selectedMealForAdd = meal
-                                        showAddFoodDialog = true
-                                    },
+                                // Clear breathing space between the collapsable tile and the plus button
+                                Spacer(modifier = Modifier.width(14.dp))
+
+                                // Dedicated Plus Button
+                                Box(
                                     modifier = Modifier
-                                        .size(32.dp)
+                                        .size(36.dp)
                                         .clip(CircleShape)
                                         .background(PurpleSurfaceVariant)
-                                        .testTag("add_food_to_$meal")
+                                        .clickable {
+                                            selectedMealForAdd = meal
+                                            showAddFoodDialog = true
+                                        }
+                                        .testTag("add_food_to_$meal"),
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Add,
                                         contentDescription = "Add food to $meal",
                                         tint = PurpleAccent,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(20.dp)
                                     )
                                 }
                             }

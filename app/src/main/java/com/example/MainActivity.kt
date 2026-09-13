@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -153,7 +154,10 @@ fun CaloraApp(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier.weight(1f, fill = false),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Box(
                             modifier = Modifier
                                 .size(36.dp)
@@ -184,18 +188,21 @@ fun CaloraApp(
                         }
                     }
 
+                    Spacer(modifier = Modifier.width(16.dp))
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         // Moon / Sun Theme Toggle Button
-                        IconButton(
-                            onClick = onToggleTheme,
+                        Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(38.dp)
                                 .clip(CircleShape)
                                 .background(PurpleSurfaceVariant)
-                                .testTag("toggle_theme_button")
+                                .clickable(onClick = onToggleTheme)
+                                .testTag("toggle_theme_button"),
+                            contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = if (isDarkTheme) Icons.Default.WbSunny else Icons.Default.Bedtime,
@@ -206,13 +213,14 @@ fun CaloraApp(
                         }
 
                         // Settings Button
-                        IconButton(
-                            onClick = { showSettingsDialog = true },
+                        Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(38.dp)
                                 .clip(CircleShape)
                                 .background(PurpleSurfaceVariant)
-                                .testTag("open_settings_button")
+                                .clickable { showSettingsDialog = true }
+                                .testTag("open_settings_button"),
+                            contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Settings,
