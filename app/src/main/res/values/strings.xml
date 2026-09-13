@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Calora Studio</string>
+    <string name="bedtime_reminder_channel_name">Bedtime Log Reminder</string>
+    <string name="bedtime_reminder_channel_desc">Gentle reminder before bed to log dinner and evening steps.</string>
+    <string name="bedtime_reminder_title">Time to wrap up today\'s log?</string>
+    <string name="bedtime_reminder_text">Take 30 seconds to log dinner and check your step count before turning in.</string>
+</resources>

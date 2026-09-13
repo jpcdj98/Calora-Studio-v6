@@ -1,0 +1,8 @@
+{
+  "name": "Calora Studio v6 (FINAL)",
+  "description": "Clean, debloated fitness tracker for calories, macros, steps, weight progress, and workout days.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
