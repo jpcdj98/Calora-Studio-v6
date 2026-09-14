@@ -5,9 +5,11 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.data.local.entity.UserProfile
 import com.example.data.local.entity.WeightEntry
 import com.example.ui.components.calculateStepCaloriesBurned
+import com.example.ui.components.getMondayToSundayDates
 import com.example.ui.components.getPast7Dates
 import com.example.ui.components.resolveBodyWeightKg
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -60,6 +62,27 @@ class ExampleRobolectricTest {
     assertEquals(7, dates.size)
     assertEquals("2026-09-04", dates.first())
     assertEquals("2026-09-10", dates.last())
+  }
+
+  @Test
+  fun `verify monday to sunday week dates generation`() {
+    // 2026-09-10 is a Thursday
+    val thursdayDates = getMondayToSundayDates("2026-09-10")
+    assertEquals(7, thursdayDates.size)
+    assertEquals("2026-09-07", thursdayDates.first()) // Monday
+    assertEquals("2026-09-13", thursdayDates.last())  // Sunday
+
+    // 2026-09-14 is a Monday
+    val mondayDates = getMondayToSundayDates("2026-09-14")
+    assertEquals(7, mondayDates.size)
+    assertEquals("2026-09-14", mondayDates.first()) // Monday
+    assertEquals("2026-09-20", mondayDates.last())  // Sunday
+
+    // 2026-09-20 is a Sunday
+    val sundayDates = getMondayToSundayDates("2026-09-20")
+    assertEquals(7, sundayDates.size)
+    assertEquals("2026-09-14", sundayDates.first()) // Monday
+    assertEquals("2026-09-20", sundayDates.last())  // Sunday
   }
 
   @Test
@@ -142,5 +165,64 @@ class ExampleRobolectricTest {
     vm.setToday()
     val todayStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
     assertEquals(todayStr, vm.selectedDate.value)
+  }
+
+  @Test
+  fun `verify custom food item with long name and serving description`() {
+    val customFood = com.example.data.local.entity.FoodItem(
+        name = "Organic Chocolate Peanut Butter Whey Protein Shake with Chia Seeds",
+        variation = "Large 24oz Double Scoop",
+        category = "Custom",
+        calories = 620,
+        protein = 52.0f,
+        carbs = 40.0f,
+        fat = 24.0f,
+        servingSize = 1.0f,
+        servingUnit = "bottle (700ml)",
+        isCustom = true
+    )
+
+    assertEquals("Organic Chocolate Peanut Butter Whey Protein Shake with Chia Seeds (Large 24oz Double Scoop)", customFood.getFullDisplayName())
+    assertEquals("1 bottle (700ml)", customFood.getServingDescription())
+    assertEquals(true, customFood.isCustom)
+  }
+
+  @Test
+  fun `verify decimal input sanitization and calorie parsing with decimals`() {
+    // Sanitization replaces commas and allows single decimal point
+    assertEquals("12.5", com.example.data.util.FractionHelper.sanitizeDecimalInput("12.5"))
+    assertEquals("12.5", com.example.data.util.FractionHelper.sanitizeDecimalInput("12,5"))
+    assertEquals("12.55", com.example.data.util.FractionHelper.sanitizeDecimalInput("12.5.5"))
+    assertEquals("0.75", com.example.data.util.FractionHelper.sanitizeDecimalInput("0.75"))
+
+    // Calorie parsing handles decimals and integers properly
+    assertEquals(250, com.example.data.util.FractionHelper.parseCalories("250"))
+    assertEquals(251, com.example.data.util.FractionHelper.parseCalories("250.6"))
+    assertEquals(250, com.example.data.util.FractionHelper.parseCalories("250.4"))
+    assertEquals(185, com.example.data.util.FractionHelper.parseCalories("184,8"))
+    assertEquals(null, com.example.data.util.FractionHelper.parseCalories(""))
+
+    // Macro formatting retains decimals when present
+    assertEquals("24.5", com.example.data.util.FractionHelper.formatMacroValue(24.5f))
+    assertEquals("30", com.example.data.util.FractionHelper.formatMacroValue(30.0f))
+    assertEquals("", com.example.data.util.FractionHelper.formatMacroValue(0f))
+
+    // Serving size parsing handles decimals
+    assertEquals(1.5f, com.example.data.util.FractionHelper.parse("1.5"))
+    assertEquals(0.75f, com.example.data.util.FractionHelper.parse("3/4"))
+    assertEquals(2.25f, com.example.data.util.FractionHelper.parse("2,25"))
+  }
+
+  @Test
+  fun `verify bedtime reminder notification channel configured for heads-up sound and vibration`() {
+    val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+    com.example.reminder.BedtimeReminderReceiver.createNotificationChannel(context)
+
+    val notificationManager = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+    val channel = notificationManager.getNotificationChannel(com.example.reminder.BedtimeReminderReceiver.CHANNEL_ID)
+    assertNotNull(channel)
+    assertEquals(android.app.NotificationManager.IMPORTANCE_HIGH, channel.importance)
+    assertEquals(true, channel.shouldVibrate())
+    assertNotNull(channel.sound)
   }
 }

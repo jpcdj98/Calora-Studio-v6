@@ -74,9 +74,9 @@ fun EditFoodDialog(
     var servingSizeText by rememberSaveable { mutableStateOf(FractionHelper.format(entry.servingSize)) }
     var servingUnit by rememberSaveable { mutableStateOf(entry.servingUnit) }
     var caloriesText by rememberSaveable { mutableStateOf(entry.calories.toString()) }
-    var proteinText by rememberSaveable { mutableStateOf(if (entry.protein > 0) entry.protein.toInt().toString() else "") }
-    var carbsText by rememberSaveable { mutableStateOf(if (entry.carbs > 0) entry.carbs.toInt().toString() else "") }
-    var fatText by rememberSaveable { mutableStateOf(if (entry.fat > 0) entry.fat.toInt().toString() else "") }
+    var proteinText by rememberSaveable { mutableStateOf(FractionHelper.formatMacroValue(entry.protein)) }
+    var carbsText by rememberSaveable { mutableStateOf(FractionHelper.formatMacroValue(entry.carbs)) }
+    var fatText by rememberSaveable { mutableStateOf(FractionHelper.formatMacroValue(entry.fat)) }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -209,7 +209,7 @@ fun EditFoodDialog(
                 ) {
                     OutlinedTextField(
                         value = servingSizeText,
-                        onValueChange = { servingSizeText = it },
+                        onValueChange = { servingSizeText = it.replace(',', '.') },
                         label = { Text("Serving Size") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -249,12 +249,12 @@ fun EditFoodDialog(
                 OutlinedTextField(
                     value = caloriesText,
                     onValueChange = {
-                        caloriesText = it.filter { c -> c.isDigit() }
+                        caloriesText = FractionHelper.sanitizeDecimalInput(it)
                         errorMessage = null
                     },
                     label = { Text("Calories (kcal)") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = PurplePrimary,
                         unfocusedBorderColor = PurpleSurfaceBorder,
@@ -278,7 +278,7 @@ fun EditFoodDialog(
                 ) {
                     OutlinedTextField(
                         value = proteinText,
-                        onValueChange = { proteinText = it.filter { c -> c.isDigit() || c == '.' } },
+                        onValueChange = { proteinText = FractionHelper.sanitizeDecimalInput(it) },
                         label = { Text("Protein (g)", color = MacroProteinColor) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -294,7 +294,7 @@ fun EditFoodDialog(
 
                     OutlinedTextField(
                         value = carbsText,
-                        onValueChange = { carbsText = it.filter { c -> c.isDigit() || c == '.' } },
+                        onValueChange = { carbsText = FractionHelper.sanitizeDecimalInput(it) },
                         label = { Text("Carbs (g)", color = MacroCarbsColor) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -310,7 +310,7 @@ fun EditFoodDialog(
 
                     OutlinedTextField(
                         value = fatText,
-                        onValueChange = { fatText = it.filter { c -> c.isDigit() || c == '.' } },
+                        onValueChange = { fatText = FractionHelper.sanitizeDecimalInput(it) },
                         label = { Text("Fat (g)", color = MacroFatColor) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -380,8 +380,8 @@ fun EditFoodDialog(
                                     errorMessage = "Please enter food name"
                                     return@Button
                                 }
-                                val cals = caloriesText.toIntOrNull()
-                                if (cals == null) {
+                                val cals = FractionHelper.parseCalories(caloriesText)
+                                if (cals == null || cals < 0) {
                                     errorMessage = "Please enter valid calories"
                                     return@Button
                                 }

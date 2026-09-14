@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -372,7 +373,10 @@ fun FoodDatabaseView(
                             text = loggedToastMessage ?: "",
                             color = Color.White,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
                         )
                     }
                 }
@@ -564,7 +568,7 @@ fun FoodGroupCard(
                 RoundedCornerShape(12.dp)
             )
             .clickable { isExpanded = !isExpanded }
-            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .padding(horizontal = 12.dp, vertical = 9.dp)
             .testTag("food_group_${foodName.lowercase().replace(" ", "_")}")
     ) {
         Column {
@@ -572,18 +576,28 @@ fun FoodGroupCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 40.dp),
+                    .heightIn(min = 38.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Left: Title + minimal subtitle info
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Text(
                             text = foodName,
                             color = PurpleLightText,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
                         )
                         if (activeItem.isCustom) {
                             Spacer(modifier = Modifier.width(6.dp))
@@ -591,25 +605,32 @@ fun FoodGroupCard(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(4.dp))
                                     .background(PurpleAccent.copy(alpha = 0.2f))
-                                    .padding(horizontal = 5.dp, vertical = 1.dp)
+                                    .border(0.5.dp, PurpleAccent.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 5.dp, vertical = 1.5.dp)
                             ) {
                                 Text(
                                     text = "Custom",
                                     color = PurpleAccent,
                                     fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    softWrap = false
                                 )
                             }
                         }
                     }
                     Spacer(modifier = Modifier.height(2.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         if (variations.size > 1) {
                             Text(
                                 text = "${variations.size} variations",
                                 color = PurpleAccent,
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1
                             )
                             Text(
                                 text = " • ",
@@ -621,7 +642,10 @@ fun FoodGroupCard(
                                 text = activeItem.variation,
                                 color = PurpleAccent,
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
                             )
                             Text(
                                 text = " • ",
@@ -632,29 +656,35 @@ fun FoodGroupCard(
                         Text(
                             text = activeItem.category,
                             color = PurpleMutedText,
-                            fontSize = 11.sp
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.width(8.dp))
 
                 // Right: Minimal stats & expand indicator
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.End) {
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        modifier = Modifier.widthIn(max = 115.dp)
+                    ) {
                         Text(
                             text = "${activeItem.calories} kcal",
                             color = Color.White,
                             fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
                         )
                         Text(
                             text = "${String.format(Locale.US, "%.0f", activeItem.protein)}g P • ${activeItem.getServingDescription()}",
                             color = PurpleMutedText,
-                            fontSize = 11.sp
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
@@ -690,7 +720,47 @@ fun FoodGroupCard(
                             .background(PurpleSurfaceBorder)
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Full Title Banner: Displays complete food name & variation if it was truncated in the collapsed row
+                    if (foodName.length > 22 || (activeItem.variation.isNotBlank() && !activeItem.variation.equals("Standard", ignoreCase = true))) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(PurpleSurfaceVariant.copy(alpha = 0.5f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = activeItem.getFullDisplayName(),
+                                color = PurpleLightText,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (activeItem.isCustom) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(PurpleAccent.copy(alpha = 0.2f))
+                                        .border(0.5.dp, PurpleAccent.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                                        .padding(horizontal = 5.dp, vertical = 1.dp)
+                                ) {
+                                    Text(
+                                        text = "Custom",
+                                        color = PurpleAccent,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
 
                     // Variations Chips (Crucial for chicken breast skin on/off, eggs boiled/fried, etc)
                     if (variations.size > 1) {
@@ -1243,8 +1313,9 @@ fun AddCustomFoodCard(
                 OutlinedTextField(
                     value = sizeText,
                     onValueChange = { input ->
-                        if (input.all { it.isDigit() || it == '.' || it == '/' || it == ' ' }) {
-                            sizeText = input
+                        val sanitized = input.replace(',', '.')
+                        if (sanitized.all { it.isDigit() || it == '.' || it == '/' || it == ' ' }) {
+                            sizeText = sanitized
                         }
                     },
                     label = { Text("Serving Size (e.g. 1, 3/4)") },
@@ -1313,9 +1384,12 @@ fun AddCustomFoodCard(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 OutlinedTextField(
                     value = caloriesText,
-                    onValueChange = { caloriesText = it.filter { c -> c.isDigit() }; error = null },
+                    onValueChange = {
+                        caloriesText = FractionHelper.sanitizeDecimalInput(it)
+                        error = null
+                    },
                     label = { Text("Calories") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MetricWorkoutColor,
@@ -1328,7 +1402,7 @@ fun AddCustomFoodCard(
 
                 OutlinedTextField(
                     value = proteinText,
-                    onValueChange = { proteinText = it },
+                    onValueChange = { proteinText = FractionHelper.sanitizeDecimalInput(it) },
                     label = { Text("P (g)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
@@ -1343,7 +1417,7 @@ fun AddCustomFoodCard(
 
                 OutlinedTextField(
                     value = carbsText,
-                    onValueChange = { carbsText = it },
+                    onValueChange = { carbsText = FractionHelper.sanitizeDecimalInput(it) },
                     label = { Text("C (g)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
@@ -1358,7 +1432,7 @@ fun AddCustomFoodCard(
 
                 OutlinedTextField(
                     value = fatText,
-                    onValueChange = { fatText = it },
+                    onValueChange = { fatText = FractionHelper.sanitizeDecimalInput(it) },
                     label = { Text("F (g)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
@@ -1385,7 +1459,7 @@ fun AddCustomFoodCard(
                         error = "Please enter food name"
                         return@Button
                     }
-                    val cals = caloriesText.toIntOrNull()
+                    val cals = FractionHelper.parseCalories(caloriesText)
                     if (cals == null || cals < 0) {
                         error = "Please enter valid calories"
                         return@Button

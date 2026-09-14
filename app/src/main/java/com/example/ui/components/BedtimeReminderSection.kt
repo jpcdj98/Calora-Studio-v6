@@ -301,13 +301,13 @@ fun BedtimeReminderSection(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "🌙 Non-nagging guarantee",
+                                text = "🌙 Heads-up pop-up with sound & vibration",
                                 color = PurpleLightText,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = "Notifies only once per day before sleep. Tap to log dinner & steps.",
+                                text = "High-priority banner alert with sound and haptic buzz. Tap to log.",
                                 color = PurpleMutedText,
                                 fontSize = 10.sp
                             )
@@ -329,7 +329,7 @@ fun BedtimeReminderSection(
                                 }
                                 BedtimeReminderScheduler.sendTestNotification(context)
                                 testNotificationSent = true
-                                Toast.makeText(context, "Test reminder sent! Check your notification bar.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "Heads-up reminder preview sent with sound & vibration!", Toast.LENGTH_SHORT).show()
                             },
                             colors = ButtonDefaults.outlinedButtonColors(
                                 contentColor = PurpleAccent

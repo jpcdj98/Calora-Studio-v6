@@ -89,6 +89,7 @@ import com.example.data.util.ServingMeasurement
 import com.example.ui.theme.MacroCarbsColor
 import com.example.ui.theme.MacroFatColor
 import com.example.ui.theme.MacroProteinColor
+import com.example.ui.theme.MetricStepsColor
 import com.example.ui.theme.MetricWorkoutColor
 import com.example.ui.theme.PurpleAccent
 import com.example.ui.theme.PurpleCardHover
@@ -99,6 +100,7 @@ import com.example.ui.theme.PurplePrimary
 import com.example.ui.theme.PurpleSurface
 import com.example.ui.theme.PurpleSurfaceBorder
 import com.example.ui.theme.PurpleSurfaceVariant
+import com.example.ui.theme.isAppInDarkTheme
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -159,6 +161,7 @@ fun AddFoodDialog(
     var isAnalyzing by rememberSaveable { mutableStateOf(false) }
     var analysisNote by rememberSaveable { mutableStateOf<String?>(null) }
     var analysisError by rememberSaveable { mutableStateOf<String?>(null) }
+    val isDark = isAppInDarkTheme
 
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -194,9 +197,9 @@ fun AddFoodDialog(
                 servingSizeText = formattedSize
                 servingUnit = analysis.servingUnit
                 caloriesText = analysis.calories.toString()
-                proteinText = analysis.protein.roundToInt().toString()
-                carbsText = analysis.carbs.roundToInt().toString()
-                fatText = analysis.fat.roundToInt().toString()
+                proteinText = FractionHelper.formatMacroValue(analysis.protein)
+                carbsText = FractionHelper.formatMacroValue(analysis.carbs)
+                fatText = FractionHelper.formatMacroValue(analysis.fat)
                 analysisNote = analysis.notes
             }.onFailure { error ->
                 analysisError = error.message ?: "Failed to estimate meal nutrition"
@@ -476,17 +479,27 @@ fun AddFoodDialog(
                                 } else {
                                     // AI Camera Box
                                     Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(
-                                            Brush.horizontalGradient(
-                                                colors = listOf(Color(0xFF2E1065), Color(0xFF1E1B4B))
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(
+                                                if (isDark) {
+                                                    Brush.horizontalGradient(
+                                                        colors = listOf(Color(0xFF2E1065), Color(0xFF1E1B4B))
+                                                    )
+                                                } else {
+                                                    Brush.horizontalGradient(
+                                                        colors = listOf(Color(0xFFF5EEFC), Color(0xFFEDE3FA))
+                                                    )
+                                                }
                                             )
-                                        )
-                                        .border(1.dp, PurpleAccent.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
-                                        .padding(14.dp)
-                                ) {
+                                            .border(
+                                                1.dp,
+                                                if (isDark) PurpleAccent.copy(alpha = 0.4f) else PurpleSurfaceBorder,
+                                                RoundedCornerShape(14.dp)
+                                            )
+                                            .padding(14.dp)
+                                    ) {
                                     Column {
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -503,7 +516,7 @@ fun AddFoodDialog(
                                             if (selectedBitmaps.isNotEmpty()) {
                                                 Text(
                                                     text = "Clear all",
-                                                    color = Color(0xFFFB7185),
+                                                    color = MacroFatColor,
                                                     fontSize = 11.sp,
                                                     modifier = Modifier.clickable { selectedBitmaps.clear() }
                                                 )
@@ -524,8 +537,12 @@ fun AddFoodDialog(
                                                     modifier = Modifier
                                                         .size(68.dp)
                                                         .clip(RoundedCornerShape(12.dp))
-                                                        .background(PurpleSurfaceVariant)
-                                                        .border(1.dp, PurpleAccent.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                                        .background(if (isDark) PurpleSurfaceVariant else PurpleSurface)
+                                                        .border(
+                                                            1.dp,
+                                                            if (isDark) PurpleAccent.copy(alpha = 0.5f) else PurplePrimary.copy(alpha = 0.35f),
+                                                            RoundedCornerShape(12.dp)
+                                                        )
                                                         .clickable { permissionLauncher.launch(Manifest.permission.CAMERA) },
                                                     contentAlignment = Alignment.Center
                                                 ) {
@@ -545,7 +562,7 @@ fun AddFoodDialog(
                                                     modifier = Modifier
                                                         .size(68.dp)
                                                         .clip(RoundedCornerShape(12.dp))
-                                                        .background(PurpleSurfaceVariant)
+                                                        .background(if (isDark) PurpleSurfaceVariant else PurpleSurface)
                                                         .border(1.dp, PurpleSurfaceBorder, RoundedCornerShape(12.dp))
                                                         .clickable {
                                                             multiplePhotoPickerLauncher.launch(
@@ -558,7 +575,7 @@ fun AddFoodDialog(
                                                         Icon(
                                                             imageVector = Icons.Default.PhotoLibrary,
                                                             contentDescription = "Select from Gallery",
-                                                            tint = PurpleMutedText,
+                                                            tint = if (isDark) PurpleMutedText else PurpleAccent,
                                                             modifier = Modifier.size(18.dp)
                                                         )
                                                         Spacer(modifier = Modifier.height(2.dp))
@@ -615,6 +632,8 @@ fun AddFoodDialog(
                                             },
                                             singleLine = true,
                                             colors = OutlinedTextFieldDefaults.colors(
+                                                focusedContainerColor = if (isDark) Color.Transparent else PurpleSurface,
+                                                unfocusedContainerColor = if (isDark) Color.Transparent else PurpleSurface,
                                                 focusedBorderColor = PurplePrimary,
                                                 unfocusedBorderColor = PurpleSurfaceBorder,
                                                 focusedTextColor = PurpleLightText,
@@ -631,7 +650,7 @@ fun AddFoodDialog(
                                             enabled = !isAnalyzing && (selectedBitmaps.isNotEmpty() || userDescription.isNotBlank()),
                                             colors = ButtonDefaults.buttonColors(
                                                 containerColor = PurplePrimary,
-                                                disabledContainerColor = PurpleSurfaceVariant
+                                                disabledContainerColor = if (isDark) PurpleSurfaceVariant else PurpleSurfaceBorder
                                             ),
                                             shape = RoundedCornerShape(10.dp),
                                             modifier = Modifier.fillMaxWidth()
@@ -659,7 +678,7 @@ fun AddFoodDialog(
                                             Spacer(modifier = Modifier.height(6.dp))
                                             Text(
                                                 text = "✨ ${analysisNote ?: ""}",
-                                                color = Color(0xFF34D399),
+                                                color = MetricStepsColor,
                                                 fontSize = 11.sp
                                             )
                                         }
@@ -668,7 +687,7 @@ fun AddFoodDialog(
                                             Spacer(modifier = Modifier.height(6.dp))
                                             Text(
                                                 text = analysisError ?: "",
-                                                color = Color(0xFFFB7185),
+                                                color = MacroFatColor,
                                                 fontSize = 11.sp
                                             )
                                         }
@@ -735,8 +754,9 @@ fun AddFoodDialog(
                                 OutlinedTextField(
                                     value = servingSizeText,
                                     onValueChange = { input ->
-                                        if (input.all { it.isDigit() || it == '.' || it == '/' || it == ' ' }) {
-                                            servingSizeText = input
+                                        val sanitized = input.replace(',', '.')
+                                        if (sanitized.all { it.isDigit() || it == '.' || it == '/' || it == ' ' }) {
+                                            servingSizeText = sanitized
                                             errorMessage = null
                                         }
                                     },
@@ -874,7 +894,7 @@ fun AddFoodDialog(
                             OutlinedTextField(
                                 value = caloriesText,
                                 onValueChange = {
-                                    caloriesText = it.filter { c -> c.isDigit() }
+                                    caloriesText = FractionHelper.sanitizeDecimalInput(it)
                                     errorMessage = null
                                 },
                                 label = { Text("Calories (kcal)") },
@@ -886,7 +906,7 @@ fun AddFoodDialog(
                                         modifier = Modifier.size(20.dp)
                                     )
                                 },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 singleLine = true,
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = MetricWorkoutColor,
@@ -910,9 +930,9 @@ fun AddFoodDialog(
                             ) {
                                 OutlinedTextField(
                                     value = proteinText,
-                                    onValueChange = { proteinText = it.filter { c -> c.isDigit() } },
+                                    onValueChange = { proteinText = FractionHelper.sanitizeDecimalInput(it) },
                                     label = { Text("Protein (g)") },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                     singleLine = true,
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = MacroProteinColor,
@@ -929,9 +949,9 @@ fun AddFoodDialog(
 
                                 OutlinedTextField(
                                     value = carbsText,
-                                    onValueChange = { carbsText = it.filter { c -> c.isDigit() } },
+                                    onValueChange = { carbsText = FractionHelper.sanitizeDecimalInput(it) },
                                     label = { Text("Carbs (g)") },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                     singleLine = true,
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = MacroCarbsColor,
@@ -948,9 +968,9 @@ fun AddFoodDialog(
 
                                 OutlinedTextField(
                                     value = fatText,
-                                    onValueChange = { fatText = it.filter { c -> c.isDigit() } },
+                                    onValueChange = { fatText = FractionHelper.sanitizeDecimalInput(it) },
                                     label = { Text("Fat (g)") },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                     singleLine = true,
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = MacroFatColor,
@@ -1051,7 +1071,8 @@ fun AddFoodDialog(
                                         Spacer(modifier = Modifier.height(6.dp))
                                         OutlinedTextField(
                                             value = customGramsPerUnit,
-                                            onValueChange = { customGramsPerUnit = it.filter { c -> c.isDigit() || c == '.' } },
+                                            onValueChange = { customGramsPerUnit = FractionHelper.sanitizeDecimalInput(it) },
+                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                             label = { Text("Grams per 1 $servingUnit (optional, e.g. 158)") },
                                             singleLine = true,
                                             colors = OutlinedTextFieldDefaults.colors(
@@ -1070,7 +1091,7 @@ fun AddFoodDialog(
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = errorMessage ?: "",
-                                    color = Color(0xFFFB7185),
+                                    color = MacroFatColor,
                                     fontSize = 12.sp
                                 )
                             }
@@ -1094,7 +1115,7 @@ fun AddFoodDialog(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Button(
                                     onClick = {
-                                        val cals = caloriesText.toIntOrNull()
+                                        val cals = FractionHelper.parseCalories(caloriesText)
                                         if (foodName.isBlank()) {
                                             errorMessage = "Please enter food or meal name"
                                             return@Button

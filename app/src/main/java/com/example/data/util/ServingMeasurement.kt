@@ -137,6 +137,51 @@ object FractionHelper {
         val sep = if (unitLower == "g" || unitLower == "ml") "" else " "
         return "$sizeStr$sep$servingUnit"
     }
+
+    /**
+     * Sanitizes input for decimal number text fields:
+     * - Replaces commas with dots (for international keyboard layouts)
+     * - Retains digits and permits at most one decimal point
+     */
+    fun sanitizeDecimalInput(input: String): String {
+        val replaced = input.replace(',', '.')
+        var dotSeen = false
+        val sb = StringBuilder()
+        for (c in replaced) {
+            if (c.isDigit()) {
+                sb.append(c)
+            } else if (c == '.' && !dotSeen) {
+                sb.append(c)
+                dotSeen = true
+            }
+        }
+        return sb.toString()
+    }
+
+    /**
+     * Parses a calorie string that might be entered with decimals, rounding to Int.
+     * e.g. "250.5" -> 251, "120" -> 120
+     */
+    fun parseCalories(input: String): Int? {
+        val sanitized = input.trim().replace(',', '.')
+        if (sanitized.isBlank()) return null
+        return sanitized.toDoubleOrNull()?.roundToInt() ?: sanitized.toIntOrNull()
+    }
+
+    /**
+     * Formats a macro float value for text inputs:
+     * - Omits trailing .0 if it's a whole number
+     * - Retains decimals if present
+     * - Returns empty string if <= 0
+     */
+    fun formatMacroValue(amount: Float): String {
+        if (amount <= 0f) return ""
+        return if (amount % 1f == 0f) {
+            amount.toInt().toString()
+        } else {
+            String.format(Locale.US, "%.1f", amount)
+        }
+    }
 }
 
 /**

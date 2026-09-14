@@ -108,6 +108,37 @@ fun getPast7Dates(anchorDateStr: String): List<String> {
     return dates
 }
 
+/**
+ * Calculates the 7 calendar dates of the week (Monday through Sunday, inclusive) containing the anchor date.
+ * The days constantly start on Monday and end on Sunday.
+ */
+fun getMondayToSundayDates(anchorDateStr: String): List<String> {
+    val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val parsed = try {
+        format.parse(anchorDateStr) ?: Date()
+    } catch (_: Exception) {
+        Date()
+    }
+    val cal = Calendar.getInstance().apply {
+        time = parsed
+        // Normalize time fields to noon to avoid edge-cases around Daylight Saving Time shifts
+        set(Calendar.HOUR_OF_DAY, 12)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+    val dow = cal.get(Calendar.DAY_OF_WEEK)
+    val daysSinceMonday = if (dow == Calendar.SUNDAY) 6 else (dow - Calendar.MONDAY)
+    cal.add(Calendar.DAY_OF_YEAR, -daysSinceMonday)
+
+    val dates = mutableListOf<String>()
+    for (i in 0 until 7) {
+        dates.add(format.format(cal.time))
+        cal.add(Calendar.DAY_OF_YEAR, 1)
+    }
+    return dates
+}
+
 fun formatFriendlyDateRange(startStr: String, endStr: String): String {
     val inFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     val outFormat = SimpleDateFormat("MMM d", Locale.getDefault())
@@ -176,8 +207,8 @@ fun EnergyDetailsDialog(
     allFoodEntries: List<FoodEntry>,
     onDismiss: () -> Unit
 ) {
-    val past7Dates = getPast7Dates(anchorDate)
-    val dayStats = past7Dates.map { dateStr ->
+    val weekDates = getMondayToSundayDates(anchorDate)
+    val dayStats = weekDates.map { dateStr ->
         val cals = allFoodEntries.filter { it.date == dateStr }.sumOf { it.calories }
         DayEnergyStat(
             dateStr = dateStr,
@@ -198,7 +229,7 @@ fun EnergyDetailsDialog(
     val highestDay = dayStats.maxByOrNull { it.calories } ?: dayStats.first()
     val lowestDay = dayStats.minByOrNull { it.calories } ?: dayStats.first()
 
-    val dateRangeDisplay = formatFriendlyDateRange(past7Dates.first(), past7Dates.last())
+    val dateRangeDisplay = formatFriendlyDateRange(weekDates.first(), weekDates.last())
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -486,12 +517,23 @@ fun EnergyDetailsDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 7-Day Day-by-Day Visual Bar Chart
-                Text(
-                    text = "7-Day Caloric Intake",
-                    color = PurpleLightText,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "7-Day Caloric Intake",
+                        color = PurpleLightText,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Mon – Sun",
+                        color = PurpleMutedText,
+                        fontSize = 11.sp
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
 
                 DailyEnergyBarChart(
@@ -527,10 +569,10 @@ fun StepsDetailsDialog(
     weightEntries: List<WeightEntry>,
     onDismiss: () -> Unit
 ) {
-    val past7Dates = getPast7Dates(anchorDate)
+    val weekDates = getMondayToSundayDates(anchorDate)
     val bodyWeightKg = resolveBodyWeightKg(userProfile, weightEntries)
 
-    val dayStats = past7Dates.map { dateStr ->
+    val dayStats = weekDates.map { dateStr ->
         val log = allFitnessLogs.find { it.date == dateStr }
         val steps = log?.steps ?: 0
         val burned = calculateStepCaloriesBurned(steps, bodyWeightKg)
@@ -556,7 +598,7 @@ fun StepsDetailsDialog(
     // 7-day calories burned
     val total7DayCaloriesBurned = dayStats.sumOf { it.caloriesBurned }
 
-    val dateRangeDisplay = formatFriendlyDateRange(past7Dates.first(), past7Dates.last())
+    val dateRangeDisplay = formatFriendlyDateRange(weekDates.first(), weekDates.last())
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -813,12 +855,23 @@ fun StepsDetailsDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 7-Day Day-by-Day Visual Step Chart
-                Text(
-                    text = "7-Day Steps & Burned Energy",
-                    color = PurpleLightText,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "7-Day Steps & Burned Energy",
+                        color = PurpleLightText,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Mon – Sun",
+                        color = PurpleMutedText,
+                        fontSize = 11.sp
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
 
                 DailyStepsBarChart(
