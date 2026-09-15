@@ -225,4 +225,90 @@ class ExampleRobolectricTest {
     assertEquals(true, channel.shouldVibrate())
     assertNotNull(channel.sound)
   }
+
+  @Test
+  fun `verify TDEE calculations for Cut, Maintain, and Bulk strategies`() {
+    // 75 kg, 175 cm, 25 years old male:
+    // BMR = 10 * 75 + 6.25 * 175 - 5 * 25 + 5 = 750 + 1093.75 - 125 + 5 = 1723.75 kcal
+    val bmrMale = com.example.data.util.TdeeCalculator.calculateBmr(
+        weightKg = 75f,
+        heightCm = 175f,
+        age = 25,
+        sex = com.example.data.util.BiologicalSex.MALE
+    )
+    assertEquals(1723.75f, bmrMale, 0.1f)
+
+    // Moderate activity (x1.55): 1723.75 * 1.55 = 2671.81 -> ~2672 kcal
+    val tdeeModerate = com.example.data.util.TdeeCalculator.calculateTdee(
+        bmr = bmrMale,
+        activityLevel = com.example.data.util.ActivityLevel.MODERATE
+    )
+    assertEquals(2672, tdeeModerate)
+
+    // Cut calculation with 500 kcal deficit
+    val cutCalc = com.example.data.util.TdeeCalculator.calculate(
+        weightKg = 75f,
+        heightCm = 175f,
+        age = 25,
+        sex = com.example.data.util.BiologicalSex.MALE,
+        activityLevel = com.example.data.util.ActivityLevel.MODERATE,
+        strategy = com.example.data.util.GoalStrategy.CUT,
+        calorieAdjustment = 500
+    )
+    assertEquals(2172, cutCalc.targetCalories)
+    assertEquals(true, cutCalc.weeklyWeightChangeKg < 0f)
+
+    // Maintain calculation
+    val maintainCalc = com.example.data.util.TdeeCalculator.calculate(
+        weightKg = 75f,
+        heightCm = 175f,
+        age = 25,
+        sex = com.example.data.util.BiologicalSex.MALE,
+        activityLevel = com.example.data.util.ActivityLevel.MODERATE,
+        strategy = com.example.data.util.GoalStrategy.MAINTAIN,
+        calorieAdjustment = 0
+    )
+    assertEquals(2672, maintainCalc.targetCalories)
+    assertEquals(0f, maintainCalc.weeklyWeightChangeKg, 0.001f)
+
+    // Bulk calculation with 300 kcal surplus
+    val bulkCalc = com.example.data.util.TdeeCalculator.calculate(
+        weightKg = 75f,
+        heightCm = 175f,
+        age = 25,
+        sex = com.example.data.util.BiologicalSex.MALE,
+        activityLevel = com.example.data.util.ActivityLevel.MODERATE,
+        strategy = com.example.data.util.GoalStrategy.BULK,
+        calorieAdjustment = 300
+    )
+    assertEquals(2972, bulkCalc.targetCalories)
+    assertEquals(true, bulkCalc.weeklyWeightChangeKg > 0f)
+
+    // Unit conversion helpers
+    val weightKgFromLbs = com.example.data.util.TdeeCalculator.lbsToKg(165.347f)
+    assertEquals(75f, weightKgFromLbs, 0.1f)
+
+    val cmFromFeetInches = com.example.data.util.TdeeCalculator.feetInchesToCm(5, 9f)
+    assertEquals(175.26f, cmFromFeetInches, 0.1f)
+  }
+
+  @Test
+  fun `verify TdeePreferences read and write state correctly`() {
+    val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+    val prefs = com.example.data.util.TdeePreferences(context)
+
+    prefs.sex = com.example.data.util.BiologicalSex.FEMALE
+    prefs.age = 32
+    prefs.heightCm = 168f
+    prefs.strategy = com.example.data.util.GoalStrategy.CUT
+    prefs.cutDeficitKcal = 400
+    prefs.autoSyncWithNutrition = true
+
+    assertEquals(com.example.data.util.BiologicalSex.FEMALE, prefs.sex)
+    assertEquals(32, prefs.age)
+    assertEquals(168f, prefs.heightCm, 0.1f)
+    assertEquals(com.example.data.util.GoalStrategy.CUT, prefs.strategy)
+    assertEquals(400, prefs.cutDeficitKcal)
+    assertEquals(true, prefs.autoSyncWithNutrition)
+  }
 }

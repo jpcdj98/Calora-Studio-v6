@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
@@ -82,10 +83,12 @@ import com.example.data.local.entity.UserProfile
 import com.example.data.remote.GeminiApiKeyManager
 import com.example.ui.components.BedtimeReminderSection
 import com.example.ui.components.GeminiApiKeySetupCard
+import com.example.ui.components.TdeeCalculatorSection
 import com.example.ui.theme.MacroCarbsColor
 import com.example.ui.theme.MacroFatColor
 import com.example.ui.theme.MacroProteinColor
 import com.example.ui.theme.MetricStepsColor
+import com.example.ui.theme.MetricWorkoutColor
 import com.example.ui.theme.PurpleAccent
 import com.example.ui.theme.PurpleLightText
 import com.example.ui.theme.PurpleMutedText
@@ -217,7 +220,7 @@ fun SettingsDialog(
         }
     }
 
-    val allCategories = remember { listOf("targets", "weight", "reminders", "ai", "backup") }
+    val allCategories = remember { listOf("targets", "tdee", "weight", "reminders", "ai", "backup") }
     var expandedCategories by rememberSaveable { mutableStateOf(setOf<String>()) }
     val allCollapsed = expandedCategories.isEmpty()
 
@@ -291,6 +294,55 @@ fun SettingsDialog(
                     onToggle = { toggleCategory("targets") },
                     testTag = "settings_cat_targets"
                 ) {
+                    // Quick TDEE & Goal Strategy link
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MetricWorkoutColor.copy(alpha = 0.12f))
+                            .border(1.dp, MetricWorkoutColor.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+                            .clickable {
+                                if (!expandedCategories.contains("tdee")) {
+                                    expandedCategories = expandedCategories + "tdee"
+                                }
+                            }
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                            .testTag("open_tdee_calculator_helper"),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(
+                                imageVector = Icons.Default.Bolt,
+                                contentDescription = null,
+                                tint = MetricWorkoutColor,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column {
+                                Text(
+                                    text = "Calculate TDEE (Cut, Maintain, Bulk)",
+                                    color = PurpleLightText,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Align calorie target and macro splits automatically",
+                                    color = PurpleMutedText,
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+                        Text(
+                            text = "Calculate →",
+                            color = MetricWorkoutColor,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     // Calorie Target
                     OutlinedTextField(
                     value = caloriesText,
@@ -612,6 +664,37 @@ fun SettingsDialog(
                         unfocusedLabelColor = PurpleMutedText
                     ),
                     modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Category: TDEE & Energy Strategy (Cut / Maintain / Bulk)
+            SettingsCategoryCard(
+                title = "TDEE & Energy Strategy",
+                subtitle = "Calculate maintenance • Select Cut, Maintain, or Bulk",
+                icon = Icons.Default.Bolt,
+                iconTint = MetricWorkoutColor,
+                isExpanded = expandedCategories.contains("tdee"),
+                onToggle = { toggleCategory("tdee") },
+                testTag = "settings_cat_tdee"
+            ) {
+                TdeeCalculatorSection(
+                    weightInput = startWeightText,
+                    weightUnit = selectedUnit,
+                    onWeightChange = { newW -> startWeightText = newW },
+                    activeMacroPresetName = selectedPresetName,
+                    currentDailyCaloriesTarget = caloriesText.toIntOrNull() ?: currentProfile.dailyCaloriesGoal,
+                    onApplyCaloriesTarget = { targetCals ->
+                        caloriesText = targetCals.toString()
+                        val preset = presets.find { it.name == selectedPresetName } ?: presets[1]
+                        val p = (targetCals * preset.proteinRatio / 4f).roundToInt()
+                        val c = (targetCals * preset.carbsRatio / 4f).roundToInt()
+                        val f = (targetCals * preset.fatRatio / 9f).roundToInt()
+                        proteinText = p.toString()
+                        carbsText = c.toString()
+                        fatText = f.toString()
+                    }
                 )
             }
 
